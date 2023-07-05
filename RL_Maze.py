@@ -62,10 +62,10 @@ class Maze:
             #calculate action value functions for each state , and all actions at each state
             Q =  np.zeros((len(self.states),len(self.actions)))
             policy_new = []
-            for row in range(len(self.states)):
-                for col in range(len(self.actions)):
-                    Q[row,col] = self.transitions[int(self.actions[col])-1][row,:].dot(V)
-                policy_new.append(np.argmax(Q[row,:])+1)
+            for state_index in range(len(self.states)):
+                for action_index in range(len(self.actions)):
+                    Q[state_index,action_index] = self.transitions[action_index][state_index,:].dot(V)
+                policy_new.append(np.argmax(Q[state_index,:])+1)
                 
             #condition to end the iteration    
             if policy_old == policy_new:
@@ -75,7 +75,28 @@ class Maze:
                 
         return policy_new
     
-    
+    def Value_Iteration(self):
+        """ function that use Value iteration approach to find optimal value 
+        function and then extract optimal policy"""
+        
+        V_old = np.zeros((len(self.states),1))
+        while True:
+            best_Q = []
+            best_actions =[]
+            Q =  np.zeros((len(self.states),len(self.actions)))
+            for state_index in range(len(self.states)):
+                for action_index in range(len(self.actions)):
+                    Q[state_index,action_index] = self.transitions[action_index][state_index,:].dot(V_old)
+                best_Q.append(np.max(Q[state_index,:]))
+                best_actions.append(np.argmax(Q[state_index,:])+1)
+            V_new = np.array(self.rewards) + self.discount_facotr * np.array(best_Q)
+            
+            if np.linalg.norm(V_new-V_old) < 0.1:
+                break
+            else:
+                V_old = V_new
+                
+        return V_new, best_actions
     
 def Main():
     
@@ -85,9 +106,19 @@ def Main():
     A = list(range(1,1+len(P)))
     gamma = 0.99
     M = Maze(S, R, P, A, gamma)
+    
     optimal_policy = M.policy_iteration()
+    print("##################### Policy Iteration #####################")
     print('actions:    1: go West    2:go North   3: go East  4: go South')
     print(optimal_policy)
+    
+    
+    optimal_values, optimal_actions = M.Value_Iteration()
+    print("##################### Value Iteration #####################")
+    print(optimal_values)
+    print('Optimal Policy')
+    print('actions:    1: go West    2:go North   3: go East  4: go South')
+    print(optimal_actions)
     
 if __name__ == "__main__":       
     Main()
